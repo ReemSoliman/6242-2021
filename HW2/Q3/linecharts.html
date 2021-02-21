@@ -1,0 +1,217 @@
+<html>
+<meta charset="utf-8">
+<script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+
+<style>
+.header{
+height:80;
+}
+path.line{
+ stroke:red;
+}
+</style>
+
+
+<body>
+
+<div class="header">
+</div>
+<script>
+
+
+//const timeConv = d3.timeParse("%_m/%e/%Y");
+//var formatTime = d3.timeFormat("%b %Y");
+var width = 1300;
+var height = 500;
+var h_padding = 150;
+var v_padding = 50;
+var svg_width = width - h_padding;
+var svg_height = height - 2*v_padding;
+var colorArray = [d3.schemeCategory10, d3.schemeAccent];
+
+var games;
+
+d3.dsv(",", "boardgame_ratings.csv", function(d) {
+  return {
+	  
+	 
+    date: new Date(d["date"]),//formatTime(Date.parse(d["date"])),
+    Catan: +d["Catan=count"],
+    Dominion: +d["Dominion=count"],
+    Codenames: +d["Codenames=count"],
+    Terraforming_Mars: +d["Terraforming Mars=count"],
+    Gloomhaven : +d["Gloomhaven=count"],
+    Magic_The_Gathering : +d["Magic: The Gathering=count"],
+    Dixit: +d["Dixit=count"],
+    Monopoly: +d["Monopoly=count"],
+    
+    Catan_Rank: +d["Catan=rank"],
+    Codenames_Rank: +d["Codenames=rank"],
+    Terraforming_Mars_Rank: +d["Terraforming Mars=rank"],
+    Gloomhaven_Rank : +d["Gloomhaven=rank"]
+  }
+}).then(function(data) {
+	
+	
+	 games =  data;
+	 let g =data.slice(1, 5);
+	 console.log(g);
+	 //create scales
+	 xScale = d3.scaleTime()               
+	          .domain([d3.min(games, function(d) { return d.date; }),
+	        	       d3.max(games, function(d) { return d.date; })]) .range([h_padding, svg_width]);    
+	 
+	 yScale = d3.scaleLinear().domain([0, d3.max(games, function(d) { return d.Catan })]).range([svg_height+v_padding, 0]);
+	 // create axis
+	 var x_axis = d3.axisBottom().scale(xScale).tickFormat(d3.timeFormat("%b %Y"));
+	 var y_axis = d3.axisLeft().scale(yScale);
+	 
+	 
+	//Create SVG element    
+	var svg = d3.select("body")                
+	             .append("svg")                
+	             .attr("width", width)                
+	             .attr("height", height);    
+	
+	svg.append("g")
+    .attr('id', 'x_axis')
+    .attr("transform", "translate("+0+","+(svg_height + v_padding)+")")
+    .call(x_axis);
+	//x-axis label
+	svg.append('text')
+    .attr('id', 'x_axis_label')
+    .attr('x', svg_width / 2 + h_padding/2)
+    .attr('y', svg_height+5)
+    .attr('text-anchor', 'middle')
+    .text('Month')	
+    
+	svg.append("g")
+	  .attr('id', 'y_axis')
+    .attr("transform", "translate("+ h_padding+",0)" )
+    .call(y_axis);
+	//y axis label
+	 svg.append("text")
+     .attr('id', 'y_axis_label')
+     .attr("transform", "rotate(-90)")
+     .attr("y", h_padding/2)
+     .attr("x",0 - (svg_height / 2))
+     .attr("dy", "1em")
+     .style("text-anchor", "middle")
+     .text("Num Of Ratings");      
+	//title
+	 svg.append('text')
+	    .attr('id', 'title')
+	    .attr('x', svg_width / 2 )
+	    .attr('y', v_padding-28)
+	    .attr('text-anchor', 'middle')
+	    .attr("font-size", 30)
+	    .text('Number Of Ratings 2016-2020')	
+	    
+	
+	var i=0;
+	Object.keys(games[0]).forEach( key=>{
+		if (! ["date", "Catan_Rank", "Codenames_Rank", "Terraforming_Mars_Rank","Gloomhaven_Rank"].includes(key) ){
+			var line =d3.line()
+			.x(d => xScale(d.date))
+	        .y(d => yScale(d[key]));
+			
+			svg.append("path")          
+			.attr("d", line(games))
+			.style("fill","none")
+			.attr("stroke", colorArray[0][i]);
+			
+			txt_arr = key.split('_');
+			txt= txt_arr.join(' ');
+			svg.append("text")
+		    .attr("transform", "translate("+(width-h_padding+5)+","+(yScale((games[45][key]))+5)+")")
+		    .attr("dy", ".35em")
+		    .attr("text-anchor", "start")
+		    .style("fill", colorArray[0][i])
+		    .text(txt);
+			
+			i++;
+		};
+		
+	});
+	
+	////////////////////////////
+	 d3.select("body").append('div')
+	.attr('class', "header");
+	 
+	 /////////////////////////////
+	 var svg = d3.select("body")                
+     .append("svg")                
+     .attr("width", width)                
+     .attr("height", height);    
+	 
+	 svg.append("g")
+	    .attr('id', 'x_axis')
+	    .attr("transform", "translate("+0+","+(svg_height +v_padding)+")")
+	    .call(x_axis);
+		//x-axis label
+		svg.append('text')
+	    .attr('id', 'x_axis_label')
+	    .attr('x', svg_width / 2 + h_padding/2)
+	    .attr('y', svg_height+5)
+	    .attr('text-anchor', 'middle')
+	    .text('Month')	
+	    
+		svg.append("g")
+		  .attr('id', 'y_axis')
+	    .attr("transform", "translate("+ h_padding+",0)" )
+	    .call(y_axis);
+		//y axis label
+		 svg.append("text")
+	     .attr('id', 'y_axis_label')
+	     .attr("transform", "rotate(-90)")
+	     .attr("y", h_padding/2)
+	     .attr("x",0 - (svg_height / 2))
+	     .attr("dy", "1em")
+	     .style("text-anchor", "middle")
+	     .text("Num Of Ratings");      
+		//title
+		 svg.append('text')
+		    .attr('id', 'title')
+		    .attr('x', svg_width / 2 )
+		    .attr('y', v_padding-28)
+		    .attr('text-anchor', 'middle')
+		    .attr("font-size", 30)
+		    .text('Number Of Ratings 2016-2020')	
+		    
+		
+		var i=0;
+		Object.keys(games[0]).forEach( key=>{
+			if (key != "date"){
+				var line =d3.line()
+				.x(d => xScale(d.date))
+		        .y(d => yScale(d[key]));
+				
+				svg.append("path")          
+				.attr("d", line(games))
+				.style("fill","none")
+				.attr("stroke", colorArray[0][i]);
+				
+				txt_arr = key.split('_');
+				txt= txt_arr.join(' ');
+				svg.append("text")
+			    .attr("transform", "translate("+(width-h_padding+5)+","+(yScale((games[45][key]))+5)+")")
+			    .attr("dy", ".35em")
+			    .attr("text-anchor", "start")
+			    .style("fill", colorArray[0][i])
+			    .text(txt);
+				
+				i++;
+			};
+			
+		});
+	
+});
+</script>
+
+<div>
+</div>
+
+
+</body>
+
+</html>
