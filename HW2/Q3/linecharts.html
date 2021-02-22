@@ -45,34 +45,46 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
     Dixit: +d["Dixit=count"],
     Monopoly: +d["Monopoly=count"],
     
-    Catan_Rank: +d["Catan=rank"],
-    Codenames_Rank: +d["Codenames=rank"],
-    Terraforming_Mars_Rank: +d["Terraforming Mars=rank"],
-    Gloomhaven_Rank : +d["Gloomhaven=rank"]
+    Catan$Rank: +d["Catan=rank"],
+    Codenames$Rank: +d["Codenames=rank"],
+    Terraforming_Mars$Rank: +d["Terraforming Mars=rank"],
+    Gloomhaven$Rank : +d["Gloomhaven=rank"]
   }
 }).then(function(data) {
 	
 	
 	 games =  data;
-	 let g =data.slice(1, 5);
-	 console.log(g);
+	 
+	 d_points = games.length;
 	 //create scales
 	 xScale = d3.scaleTime()               
 	          .domain([d3.min(games, function(d) { return d.date; }),
 	        	       d3.max(games, function(d) { return d.date; })]) .range([h_padding, svg_width]);    
 	 
-	 yScale = d3.scaleLinear().domain([0, d3.max(games, function(d) { return d.Catan })]).range([svg_height+v_padding, 0]);
+	 yScale = d3.scaleLinear().domain([0, d3.max(games, function(d) { return d.Catan })]).range([svg_height+v_padding, v_padding]);
 	 // create axis
 	 var x_axis = d3.axisBottom().scale(xScale).tickFormat(d3.timeFormat("%b %Y"));
 	 var y_axis = d3.axisLeft().scale(yScale);
 	 
 	 
+	 
+    	
+	    
 	//Create SVG element    
 	var svg = d3.select("body")                
 	             .append("svg")                
 	             .attr("width", width)                
 	             .attr("height", height);    
 	
+	 //graph title
+    svg.append('text')
+	    .attr('id', 'title')
+	    .attr('x', svg_width / 2 )
+	    .attr('y', v_padding-28)
+	    .attr('text-anchor', 'middle')
+	    .attr("font-size", 25)
+	    .text('Number Of Ratings 2016-2020')
+	    
 	svg.append("g")
     .attr('id', 'x_axis')
     .attr("transform", "translate("+0+","+(svg_height + v_padding)+")")
@@ -81,7 +93,7 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 	svg.append('text')
     .attr('id', 'x_axis_label')
     .attr('x', svg_width / 2 + h_padding/2)
-    .attr('y', svg_height+5)
+    .attr('y', (svg_height+ 2*v_padding))
     .attr('text-anchor', 'middle')
     .text('Month')	
     
@@ -99,18 +111,11 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
      .style("text-anchor", "middle")
      .text("Num Of Ratings");      
 	//title
-	 svg.append('text')
-	    .attr('id', 'title')
-	    .attr('x', svg_width / 2 )
-	    .attr('y', v_padding-28)
-	    .attr('text-anchor', 'middle')
-	    .attr("font-size", 30)
-	    .text('Number Of Ratings 2016-2020')	
-	    
+	
 	
 	var i=0;
 	Object.keys(games[0]).forEach( key=>{
-		if (! ["date", "Catan_Rank", "Codenames_Rank", "Terraforming_Mars_Rank","Gloomhaven_Rank"].includes(key) ){
+		if (! ["date", "Catan$Rank", "Codenames$Rank", "Terraforming_Mars$Rank","Gloomhaven$Rank"].includes(key) ){
 			var line =d3.line()
 			.x(d => xScale(d.date))
 	        .y(d => yScale(d[key]));
@@ -138,12 +143,27 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 	 d3.select("body").append('div')
 	.attr('class', "header");
 	 
-	 /////////////////////////////
+	 /////////2nd graph////////////////////
+	 
+	 // height = 600;
+	  //svg_height = height - 2*v_padding;
+	  //yScale = d3.scaleLinear().domain([0, d3.max(games, function(d) { return d.Catan })]).range([svg_height+v_padding, v_padding]);
+	 
+	  
 	 var svg = d3.select("body")                
      .append("svg")                
      .attr("width", width)                
      .attr("height", height);    
 	 
+	//graph title
+     svg.append('text')
+	    .attr('id', 'title')
+	    .attr('x', svg_width / 2 )
+	    .attr('y', v_padding-28)
+	    .attr('text-anchor', 'middle')
+	    .attr("font-size", 25)
+	    .text('Number Of Ratings 2016-2020 With Ranking ')	
+	    
 	 svg.append("g")
 	    .attr('id', 'x_axis')
 	    .attr("transform", "translate("+0+","+(svg_height +v_padding)+")")
@@ -152,13 +172,13 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 		svg.append('text')
 	    .attr('id', 'x_axis_label')
 	    .attr('x', svg_width / 2 + h_padding/2)
-	    .attr('y', svg_height+5)
+	    .attr('y', svg_height+v_padding*2)
 	    .attr('text-anchor', 'middle')
 	    .text('Month')	
 	    
 		svg.append("g")
 		  .attr('id', 'y_axis')
-	    .attr("transform", "translate("+ h_padding+",0)" )
+	    .attr("transform", "translate("+ h_padding+","+ 0+")" )
 	    .call(y_axis);
 		//y axis label
 		 svg.append("text")
@@ -170,18 +190,13 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 	     .style("text-anchor", "middle")
 	     .text("Num Of Ratings");      
 		//title
-		 svg.append('text')
-		    .attr('id', 'title')
-		    .attr('x', svg_width / 2 )
-		    .attr('y', v_padding-28)
-		    .attr('text-anchor', 'middle')
-		    .attr("font-size", 30)
-		    .text('Number Of Ratings 2016-2020')	
+		
 		    
 		
 		var i=0;
-		Object.keys(games[0]).forEach( key=>{
-			if (key != "date"){
+		Object.keys(games[0]).forEach( key=>{  //2nd graph lines & circles start
+			if (! ["date", "Catan$Rank", "Codenames$Rank", "Terraforming_Mars$Rank","Gloomhaven$Rank"].includes(key) ){
+				
 				var line =d3.line()
 				.x(d => xScale(d.date))
 		        .y(d => yScale(d[key]));
@@ -190,7 +205,7 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 				.attr("d", line(games))
 				.style("fill","none")
 				.attr("stroke", colorArray[0][i]);
-				
+				//add line label
 				txt_arr = key.split('_');
 				txt= txt_arr.join(' ');
 				svg.append("text")
@@ -200,10 +215,286 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 			    .style("fill", colorArray[0][i])
 			    .text(txt);
 				
+				if ([ "Catan", "Codenames", "Terraforming_Mars","Gloomhaven"].includes(key) ){
+					//add circles
+					svg.selectAll("ranks.circle")
+					.data(games)
+					.enter()
+					.each(function (d,j){ 
+						if ((j+1)%3 === 0){
+							d3.select(this).append("circle")
+							.attr("r", 15)
+							.attr("cx", d=> xScale(d.date))
+							
+							.attr("cy", d=> yScale(d[key]))
+							.attr("fill", colorArray[0][i])
+							.raise();
+						}
+					});
+					
+					svg.selectAll("ranks.text")
+					.data(games)
+					.enter()
+					.each(function (d,j){ 
+						if ((j+1)%3 === 0){
+							d3.select(this).append("text")
+							.attr("dx", d=> xScale(d.date)-10)
+							.attr("dy", d=> yScale(d[key])+2)
+							.attr("fill", 'black')
+							.attr("font-size", 13)
+							.text(d[key+'$Rank'])
+							.raise();
+						}
+					});
+				}
+				
+				
+				
 				i++;
 			};
 			
-		});
+		}); //2nd graph lines & circles end
+		
+////////////////////////////
+		 d3.select("body").append('div')
+		.attr('class', "header");
+		 
+//////////3rd graph///////////////////
+         
+         height= 600;
+         graph_height = height-(2*v_padding);
+         
+      
+         
+		    
+         var sqScale = d3.scaleSqrt().domain([0, d3.max(games, function(d) { return d.Catan }) ]) .range([graph_height+v_padding, v_padding]);  
+         var sq_y_axis = d3.axisLeft().scale(sqScale);
+         
+		 var svg = d3.select("body")                
+	     .append("svg")                
+	     .attr("width", width)                
+	     .attr("height", height);    
+		 
+		//graph title
+         svg.append('text')
+		    .attr('id', 'title')
+		    .attr('x', svg_width / 2 )
+		    .attr('y', v_padding-28)
+		    .attr('text-anchor', 'middle')
+		    .attr("font-size", 25)
+		    .text('Number Of Ratings 2016-2020 (Square Root Scale)')	
+		    
+		 svg.append("g")
+		    .attr('id', 'sq_x_axis')
+		    .attr("transform", "translate("+0+","+(graph_height +v_padding)+")")
+		    .call(x_axis);
+			//x-axis label
+			svg.append('text')
+		    .attr('id', 'x_axis_label')
+		    .attr('x', svg_width / 2 + h_padding/2)
+		    .attr('y', graph_height+v_padding*2)
+		    .attr('text-anchor', 'middle')
+		    .text('Month')	
+		    
+			svg.append("g")
+			  .attr('id', 'sq_y_axis')
+		    .attr("transform", "translate("+ h_padding+","+0+")" )
+		    .call(sq_y_axis);
+			//y axis label
+			 svg.append("text")
+		     .attr('id', 'y_axis_label')
+		     .attr("transform", "rotate(-90)")
+		     .attr("y", h_padding/2)
+		     .attr("x",0 - (graph_height / 2))
+		     .attr("dy", "1em")
+		     .style("text-anchor", "middle")
+		     .text("Num Of Ratings");      
+			//title
+			 
+			    
+			
+			var i=0;
+			Object.keys(games[0]).forEach( key=>{  //3rd graph lines & circles start
+				if (! ["date", "Catan$Rank", "Codenames$Rank", "Terraforming_Mars$Rank","Gloomhaven$Rank"].includes(key) ){
+					
+					var line =d3.line()
+					.x(d => xScale(d.date))
+			        .y(d => sqScale(d[key]));
+					
+					svg.append("path")          
+					.attr("d", line(games))
+					.style("fill","none")
+					.attr("stroke", colorArray[0][i]);
+					//add line label
+					txt_arr = key.split('_');
+					txt= txt_arr.join(' ');
+					svg.append("text")
+				    .attr("transform", "translate("+(width-h_padding+5)+","+(sqScale((games[45][key]))+5)+")")
+				    .attr("dy", ".35em")
+				    .attr("text-anchor", "start")
+				    .style("fill", colorArray[0][i])
+				    .text(txt);
+					
+					if ([ "Catan", "Codenames", "Terraforming_Mars","Gloomhaven"].includes(key) ){
+						//add circles
+						svg.selectAll("ranks.circle")
+						.data(games)
+						.enter()
+						.each(function (d,j){ 
+							if ((j+1)%3 === 0){
+								d3.select(this).append("circle")
+								.attr("r", 15)
+								.attr("cx", d=> xScale(d.date))
+								
+								.attr("cy", d=> sqScale(d[key]))
+								.attr("fill", colorArray[0][i])
+								.raise();
+							}
+						});
+						
+						svg.selectAll("ranks.text")
+						.data(games)
+						.enter()
+						.each(function (d,j){ 
+							if ((j+1)%3 === 0){
+								d3.select(this).append("text")
+								.attr("dx", d=> xScale(d.date)-10)
+								.attr("dy", d=> sqScale(d[key])+2)
+								.attr("fill", 'black')
+								.attr("font-size", 13)
+								.text(d[key+'$Rank'])
+								.raise();
+							}
+						});
+					}
+					
+					
+					
+					i++;
+				};
+				
+			}); //3rd graph lines & circles end
+			
+////////////////////////////
+			 d3.select("body").append('div')
+			.attr('class', "header");
+			 
+	//////////4th graph///////////////////
+	         
+	         height= 600;
+	         graph_height = height-(2*v_padding);
+	         
+	         
+	         
+			    
+	         //var sqScale = d3.scaleSqrt().domain([0, d3.max(games, function(d) { return d.Catan }) ]) .range([graph_height+v_padding, 0]);  
+	         var logScale = d3.scaleLog().domain([1e-6, 1e5]).range([graph_height+v_padding, 2*v_padding]);
+
+	         var sq_y_axis = d3.axisLeft().scale(logScale);
+	         
+			 var svg = d3.select("body")                
+		     .append("svg")                
+		     .attr("width", width)                
+		     .attr("height", height);    
+			 
+			 svg.append('text')
+			    .attr('id', 'title')
+			    .attr('x', svg_width / 2 )
+			    .attr('y', v_padding-28)
+			    .attr('text-anchor', 'middle')
+			    .attr("font-size", 25)
+			    .text('Number Of Ratings 2016-2020 (Log Scale)')	
+			    
+			 svg.append("g")
+			    .attr('id', 'sq_x_axis')
+			    .attr("transform", "translate("+0+","+(graph_height +v_padding)+")")
+			    .call(x_axis);
+				//x-axis label
+				svg.append('text')
+			    .attr('id', 'x_axis_label')
+			    .attr('x', svg_width / 2 + h_padding/2)
+			    .attr('y', graph_height+v_padding*2)
+			    .attr('text-anchor', 'middle')
+			    .text('Month')	
+			    
+				svg.append("g")
+				  .attr('id', 'sq_y_axis')
+			    .attr("transform", "translate("+ h_padding+","+0+")" )
+			    .call(sq_y_axis);
+				//y axis label
+				 svg.append("text")
+			     .attr('id', 'y_axis_label')
+			     .attr("transform", "rotate(-90)")
+			     .attr("y", h_padding/2)
+			     .attr("x",0 - (graph_height / 2))
+			     .attr("dy", "1em")
+			     .style("text-anchor", "middle")
+			     .text("Num Of Ratings");      
+				//title
+				 
+				    
+				
+				var i=0;
+				Object.keys(games[0]).forEach( key=>{  //3rd graph lines & circles start
+					if (! ["date", "Catan$Rank", "Codenames$Rank", "Terraforming_Mars$Rank","Gloomhaven$Rank"].includes(key) ){
+						
+						var line =d3.line()
+						.x(d => xScale(d.date))
+				        .y(d => logScale(d[key]));
+						
+						svg.append("path")          
+						.attr("d", line(games))
+						.style("fill","none")
+						.attr("stroke", colorArray[0][i]);
+						//add line label
+						txt_arr = key.split('_');
+						txt= txt_arr.join(' ');
+						svg.append("text")
+					    .attr("transform", "translate("+(width-h_padding+5)+","+(logScale((games[45][key]))+5)+")")
+					    .attr("dy", ".35em")
+					    .attr("text-anchor", "start")
+					    .style("fill", colorArray[0][i])
+					    .text(txt);
+						
+						if ([ "Catan", "Codenames", "Terraforming_Mars","Gloomhaven"].includes(key) ){
+							//add circles
+							svg.selectAll("ranks.circle")
+							.data(games)
+							.enter()
+							.each(function (d,j){ 
+								if ((j+1)%3 === 0){
+									d3.select(this).append("circle")
+									.attr("r", 15)
+									.attr("cx", d=> xScale(d.date))
+									
+									.attr("cy", d=> logScale(d[key]))
+									.attr("fill", colorArray[0][i])
+									.raise();
+								}
+							});
+							
+							svg.selectAll("ranks.text")
+							.data(games)
+							.enter()
+							.each(function (d,j){ 
+								if ((j+1)%3 === 0){
+									d3.select(this).append("text")
+									.attr("dx", d=> xScale(d.date)-10)
+									.attr("dy", d=> logScale(d[key])+2)
+									.attr("fill", 'black')
+									.attr("font-size", 13)
+									.text(d[key+'$Rank'])
+									.raise();
+								}
+							});
+						}
+						
+						
+						
+						i++;
+					};
+					
+				}); //3rd graph lines & circles end		 
 	
 });
 </script>
