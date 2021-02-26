@@ -6,12 +6,301 @@
   <script type="text/javascript" src="../lib/d3-dsv.min.js"></script>
 </head>
 
+<style>
+div.spacing{
+ height:80;
+}
+
+.bar {
+            fill: #5f89ad;
+        }
+</style>
+
 <body>
 
-<div id="container"></div>
+<div class="spacing" style="height:80;">
+</div>
 
 <script>
+var svg_width = 1300;
+var svg_height = 500;
+var h_padding = 150;
+var v_padding = 50;
+var chart_width = svg_width - h_padding;
+var chart_height = svg_height - 2*v_padding;
 
+var colorArray = [d3.schemeCategory10, d3.schemeAccent];
+
+var svg_bar_c;
+
+var dataset = d3.csv("average-rating.csv"); 
+
+function getMax(p, v){
+	
+	return (p.value<v.value? p.value: v.value);
+}
+function getMaxValue(arr){
+	max = 0;
+	for (item of arr){
+		if (item.value > max)
+			max= item.value;
+	}
+	return max;
+}
+function getMaxX(p, v){
+	
+	return (p.key>v.key? p.key: v.key);
+}
+dataset.then(function(csv_data) {
+	  
+	  var ratings_data = d3.nest()
+	  .key(function(d) {   return d.year; })
+	  .key(function(d) { return Math.floor(d.average_rating);})
+	  //.rollup(function(d) {return d3.sum(d, function(g) {return g.users_rated; });
+	  .rollup(function(d) { return  d.length;} )
+	  .entries(csv_data);
+	  
+
+      //console.log(ratings_data);
+      var max_arrY = new Array(ratings_data.length);
+      var max_arrX = new Array(ratings_data.length);
+      i=0;
+      for(a of ratings_data){
+    	  r = a.values;
+    	  //console.log("year values"+ typeof r);
+    	  //console.log( r);
+    	  //console.log( r);
+    	  max_arrY[i] = getMaxValue(r);
+    	  max_arrX[i] = r.reduce(getMaxX, 0);
+    	  i++;
+      }
+      //console.log(max_arrY);
+      yaxis_upperlimit = Math.max(...max_arrY); //spread the array values as max function takes paramertes, it doesn't take array
+      //console.log(yaxis_upperlimit);
+      xaxis_upperlimit = Math.max(...max_arrX);
+      //console.log(xaxis_upperlimit);
+      
+      yScale = d3.scaleLinear().domain([0, yaxis_upperlimit]).range([chart_height+v_padding, v_padding]);
+      xScale = d3.scaleLinear().domain([0, xaxis_upperlimit]).range([h_padding, chart_width]);
+      
+   // create axis
+ 	 var x_axis = d3.axisBottom().scale(xScale);
+ 	 var y_axis = d3.axisLeft().scale(yScale);
+ 	 
+ 	
+ 	//Create SVG element    
+ 	var svg = d3.select("body")                
+ 	             .append("svg")                
+ 	             .attr("width", svg_width)                
+ 	             .attr("height", svg_height);    
+ 	
+ 	//Create SVG element for bar chart   
+ 	 svg_bar_c = d3.select("body")                
+ 	             .append("svg")                
+ 	             .attr("width", svg_width)                
+ 	             .attr("height", svg_height);    
+ 	
+ 	 //graph title
+     svg.append('text')
+ 	    .attr('id', 'title')
+ 	    .attr('x', chart_width / 2 )
+ 	    .attr('y', v_padding-28)
+ 	    .attr('text-anchor', 'middle')
+ 	    .attr("font-size", 25)
+ 	    .text('Board Games By Rating 2015-2019')
+ 	    
+ 	   svg.append('text')
+	    .attr('x', chart_width / 2 )
+	    .attr('y', v_padding-10)
+	    .attr('text-anchor', 'middle')
+	    .attr("font-size", 20)
+	    .text('rsoliman3')    
+	    
+	 	svg.append("g")
+	     .attr('id', 'x_axis')
+	     .attr("transform", "translate("+0+","+(chart_height + v_padding)+")")
+	     .call(x_axis);
+	 	//x-axis label
+	 	svg.append('text')
+	     .attr('x', chart_width / 2 + h_padding/2)
+	     .attr('y', (chart_height+ 2*v_padding-10))
+	     .attr('text-anchor', 'middle')
+	     .text('Rating')	
+	     
+	 	svg.append("g")
+	 	  .attr('id', 'y_axis')
+	     .attr("transform", "translate("+ h_padding+",0)" )
+	     .call(y_axis);
+	 	
+	 	//y axis label
+		 svg.append("text")
+	     .attr("transform", "rotate(-90)")
+	     .attr("y", h_padding/2)
+	     .attr("x",0 - (chart_height / 2))
+	     .attr("dy", "1em")
+	     .style("text-anchor", "middle")
+	     .text("Count");      
+	 	
+		 i=0;
+		 var l = 0; //counter used in legend spacing
+		 ratings_data.forEach(function(d){
+			 
+			 
+			 if( ["2015", "2016", "2017", "2018","2019"].includes(d.key)){  //show these years only
+				 
+			     
+				 year_values = d.values;
+				 year = d.key;
+				 //console.log(Object.keys(year_values));
+				 
+				 exist_keys = new Array(year_values.length);
+				 for(n=0; n< year_values.length;n++){
+					 //console.log(year_values[n].key);
+					 exist_keys[n]= year_values[n].key;
+				 }
+				
+				 for (j=0; j<= xaxis_upperlimit; j++ ){
+					 if (!exist_keys.includes(j.toString())){
+						 //console.log(j+" not in keys")
+						 year_values.push({
+							    "key": j.toString(),
+							    "value": 0
+							});
+					 }
+				 }
+					 
+				 year_values.sort((a,b) =>  a.key-b.key );
+				 //console.log( year_values);
+				 
+				 
+				 var line =d3.line()
+					.x(d => xScale(parseInt(d['key'])))
+			        .y(d => yScale(parseInt(d['value'])));
+			 
+				 svg.append("path")          
+					.attr("d", line(year_values))
+					.style("fill","none")
+					.attr("stroke", colorArray[0][i]);
+				 
+				 //draw circles at the data points
+				 svg.selectAll("points")
+				 .data(year_values)
+				 .enter()
+				 .append("circle")
+				 .attr("r", 5)
+				 .attr("cx", d=> xScale(d.key))
+				 .attr("cy", d=> yScale(d.value))
+				 .attr("fill", colorArray[0][i])
+				 .datum(function(d){ return {x:d.key,
+					     y: d.value,
+					     year: year};})
+				 .on("mouseover", handleMouseOver);
+				 
+				 //add legend
+				 svg.selectAll("legend")
+				 .data(year_values)
+				 .enter()
+				 .append("circle")
+				 .attr("r", 7)
+				 .attr("cx", chart_width+5)
+				 .attr("cy", 100+(l*20))
+				 .attr("fill", colorArray[0][i]);
+				 //add legend text
+				 svg.append('text')
+			     .attr('x', chart_width+25)
+			     .attr('y', 103+(l*20))
+			     .attr('text-anchor', 'middle')
+			     .attr("font-size", 12)
+			     .text(d.key)
+			     
+			     l++;
+			 
+			 }
+			 
+			 i++;
+			 
+			 
+		 }
+		 
+		 )
+	 	
+});
+	  
+function handleMouseOver(d,i){
+	
+	 
+	 chart_rating = d.x;
+	 chart_year = d.year;
+	 
+	 
+	 dataset.then(function(csv_data) {
+		 
+		 var bar_height = 25;
+		 var bar_padding = 10;
+		 
+		 var games_year_rating = csv_data.filter(function(d){ return d.year == chart_year && Math.floor(d.average_rating) == chart_rating ; })
+		 games_year_rating.sort(function(a, b){ return b.users_rated - a.users_rated })
+		 var top_5 = games_year_rating.slice(0,5);
+		 //console.log(x);
+		 
+		 xScale = d3.scaleLinear().domain([0, 500]).range([h_padding, chart_width]);
+         yScale = d3.scaleLinear().range([v_padding, chart_height]);
+         // create axis
+     	 var x_axis = d3.axisBottom().scale(xScale);
+     	 var y_axis = d3.axisLeft().scale(yScale);
+      
+	   // create axis
+	 	 var x_axis = d3.axisBottom().scale(xScale);
+	 	 var y_axis = d3.axisLeft().scale(yScale);
+	 	 
+	 	svg_bar_c.append("g")
+	     .attr('id', 'x_axis')
+	     .attr("transform", "translate("+0+","+(chart_height + v_padding)+")")
+	     .call(x_axis);
+	 	//x-axis label
+	 	svg_bar_c.append('text')
+	     .attr('x', chart_width / 2 + h_padding/2)
+	     .attr('y', (chart_height+ 2*v_padding-10))
+	     .attr('text-anchor', 'middle')
+	     .text('Number Of Users')	
+	     
+	 	svg_bar_c.append("g")
+	 	  .attr('id', 'y_axis')
+	     .attr("transform", "translate("+ h_padding+","+ v_padding+")" )
+	     .call(y_axis);
+	 	
+		 svg_bar_c.append('text')
+	 	    .attr('id', 'title')
+	 	    .attr('x', chart_width / 2 )
+	 	    .attr('y', v_padding-28)
+	 	    .attr('text-anchor', 'middle')
+	 	    .attr("font-size", 25)
+	 	    .text('Top 5 most rated games for year '+chart_year + ' with rating '+ chart_rating);
+		 
+			 var bars = svg_bar_c.selectAll(".bar")
+		     .data(top_5)
+		     .enter()
+		     .append("g")
+		
+		 //append rects
+		    bars.append("rect")
+		     .attr("class", "bar")
+		     .attr("y", function (d,i) {
+		         return (i*25+10);
+		     })
+		     .attr("height",25)
+		     .attr("x", 0)
+		     .attr("width", function (d) {
+		         return d.users_rated;
+		     })
+		 
+	 });
+	 
+	
+}
+	  
 </script>
+
+
 
 </body>
