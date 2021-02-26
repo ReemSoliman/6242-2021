@@ -16,11 +16,9 @@ path.line{
 
 <div class="header">
 </div>
+
 <script>
 
-
-//const timeConv = d3.timeParse("%_m/%e/%Y");
-//var formatTime = d3.timeFormat("%b %Y");
 var width = 1300;
 var height = 500;
 var h_padding = 150;
@@ -35,7 +33,7 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
   return {
 	  
 	 
-    date: new Date(d["date"]),//formatTime(Date.parse(d["date"])),
+    date: new Date(d["date"]),
     Catan: +d["Catan=count"],
     Dominion: +d["Dominion=count"],
     Codenames: +d["Codenames=count"],
@@ -55,6 +53,8 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 	
 	 games =  data;
 	 
+	 console.log( games);
+	 
 	 d_points = games.length;
 	 //create scales
 	 xScale = d3.scaleTime()               
@@ -66,10 +66,7 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 	 var x_axis = d3.axisBottom().scale(xScale).tickFormat(d3.timeFormat("%b %Y"));
 	 var y_axis = d3.axisLeft().scale(yScale);
 	 
-	 
-	 
-    	
-	    
+	
 	//Create SVG element    
 	var svg = d3.select("body")                
 	             .append("svg")                
@@ -84,6 +81,8 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 	    .attr('text-anchor', 'middle')
 	    .attr("font-size", 25)
 	    .text('Number Of Ratings 2016-2020')
+	    
+	
 	    
 	svg.append("g")
     .attr('id', 'x_axis')
@@ -110,8 +109,6 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
      .attr("dy", "1em")
      .style("text-anchor", "middle")
      .text("Num Of Ratings");      
-	//title
-	
 	
 	var i=0;
 	Object.keys(games[0]).forEach( key=>{
@@ -189,9 +186,6 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 	     .attr("dy", "1em")
 	     .style("text-anchor", "middle")
 	     .text("Num Of Ratings");      
-		//title
-		
-		    
 		
 		var i=0;
 		Object.keys(games[0]).forEach( key=>{  //2nd graph lines & circles start
@@ -263,9 +257,7 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
          
          height= 600;
          graph_height = height-(2*v_padding);
-         
-      
-         
+               
 		    
          var sqScale = d3.scaleSqrt().domain([0, d3.max(games, function(d) { return d.Catan }) ]) .range([graph_height+v_padding, v_padding]);  
          var sq_y_axis = d3.axisLeft().scale(sqScale);
@@ -369,7 +361,6 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 					}
 					
 					
-					
 					i++;
 				};
 				
@@ -396,7 +387,7 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 		     .append("svg")                
 		     .attr("width", width)                
 		     .attr("height", height);    
-			 
+			 //graph title
 			 svg.append('text')
 			    .attr('id', 'title')
 			    .attr('x', svg_width / 2 )
@@ -430,12 +421,10 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 			     .attr("dy", "1em")
 			     .style("text-anchor", "middle")
 			     .text("Num Of Ratings");      
-				//title
-				 
 				    
 				
 				var i=0;
-				Object.keys(games[0]).forEach( key=>{  //3rd graph lines & circles start
+				Object.keys(games[0]).forEach( key=>{  //4th graph lines & circles start
 					if (! ["date", "Catan$Rank", "Codenames$Rank", "Terraforming_Mars$Rank","Gloomhaven$Rank"].includes(key) ){
 						
 						var line =d3.line()
@@ -494,7 +483,19 @@ d3.dsv(",", "boardgame_ratings.csv", function(d) {
 						i++;
 					};
 					
-				}); //3rd graph lines & circles end		 
+				}); //4th graph lines & circles end		 
+				
+				var svg = d3.select("body")                
+			     .append("svg")                
+			     .attr("width", width)                
+			     .attr("height", 50);    
+				svg.append('text')
+			    .attr('id', 'title')
+			    .attr('x', svg_width -50 )
+			    .attr('y', v_padding-28)
+			    .attr("font-size", 20)
+			    .text('rsoliman3')	
+				
 	
 });
 </script>
