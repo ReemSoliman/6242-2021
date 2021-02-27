@@ -4,34 +4,35 @@
   <meta charset="utf-8">
   <script type="text/javascript" src="../lib/d3.v5.min.js"></script>
   <script type="text/javascript" src="../lib/d3-dsv.min.js"></script>
-</head>
+
 
 <style>
-div.spacing{
+#spacing{
  height:80;
 }
 
 .bar {
             fill: #5f89ad;
         }
+        
+  .svg{
+   margin-left:auto;
+   margin-right:auto;
+   display:block;
+}
 </style>
-
+</head>
 <body>
 
-<div class="spacing" style="height:80;">
+<div id="spacing" style="height:80;">
 </div>
 
 <script>
-var svg_width = 1300;
-var svg_height = 500;
-var h_padding = 150;
-var v_padding = 50;
-var chart_width = svg_width - h_padding;
-var chart_height = svg_height - 2*v_padding;
+
 
 var colorArray = [d3.schemeCategory10, d3.schemeAccent];
 
-var svg_bar_c;
+//var svg_bar_c;
 
 var dataset = d3.csv("average-rating.csv"); 
 
@@ -53,6 +54,13 @@ function getMaxX(p, v){
 }
 dataset.then(function(csv_data) {
 	  
+	var svg_width = 1300;
+	var svg_height = 500;
+	var h_padding = 150;
+	var v_padding = 50;
+	var chart_width = svg_width - h_padding;
+	var chart_height = svg_height - 2*v_padding;
+	
 	  var ratings_data = d3.nest()
 	  .key(function(d) {   return d.year; })
 	  .key(function(d) { return Math.floor(d.average_rating);})
@@ -94,11 +102,7 @@ dataset.then(function(csv_data) {
  	             .attr("width", svg_width)                
  	             .attr("height", svg_height);    
  	
- 	//Create SVG element for bar chart   
- 	 svg_bar_c = d3.select("body")                
- 	             .append("svg")                
- 	             .attr("width", svg_width)                
- 	             .attr("height", svg_height);    
+ 	  
  	
  	 //graph title
      svg.append('text')
@@ -126,7 +130,7 @@ dataset.then(function(csv_data) {
 	     .attr('y', (chart_height+ 2*v_padding-10))
 	     .attr('text-anchor', 'middle')
 	     .text('Rating')	
-	     
+	     //y axis
 	 	svg.append("g")
 	 	  .attr('id', 'y_axis')
 	     .attr("transform", "translate("+ h_padding+",0)" )
@@ -194,7 +198,8 @@ dataset.then(function(csv_data) {
 				 .datum(function(d){ return {x:d.key,
 					     y: d.value,
 					     year: year};})
-				 .on("mouseover", handleMouseOver);
+				 .on("mouseover", handleMouseOver )
+				 .on("mouseout", handleMouseOut );
 				 
 				 //add legend
 				 svg.selectAll("legend")
@@ -225,78 +230,143 @@ dataset.then(function(csv_data) {
 		 )
 	 	
 });
-	  
+
+function make_x_gridlines(x) {
+    return d3.axisBottom(x)
+    	.ticks(8)
+  }
 function handleMouseOver(d,i){
 	
-	 
+	d3.select(event.currentTarget).attr('r',10);
+	
 	 chart_rating = d.x;
 	 chart_year = d.year;
 	 
-	 
+	    var svg_width = 900;
+		var svg_height = 300;
+		var h_padding = 150;
+		var v_padding = 50;
+		var chart_width = svg_width - h_padding;
+		var chart_height = svg_height - 2*v_padding;
+		var x_axis;
+		
+		
 	 dataset.then(function(csv_data) {
-		 
+		  
 		 var bar_height = 25;
 		 var bar_padding = 10;
 		 
-		 var games_year_rating = csv_data.filter(function(d){ return d.year == chart_year && Math.floor(d.average_rating) == chart_rating ; })
+		 
+		 var games_year_rating = csv_data.filter(function(d){ return d.year == chart_year && Math.floor(d.average_rating) == chart_rating ; }) //filter data array to get rows with specified year and rating only
 		 games_year_rating.sort(function(a, b){ return b.users_rated - a.users_rated })
 		 var top_5 = games_year_rating.slice(0,5);
-		 //console.log(x);
 		 
-		 xScale = d3.scaleLinear().domain([0, 500]).range([h_padding, chart_width]);
-         yScale = d3.scaleLinear().range([v_padding, chart_height]);
-         // create axis
-     	 var x_axis = d3.axisBottom().scale(xScale);
-     	 var y_axis = d3.axisLeft().scale(yScale);
-      
-	   // create axis
-	 	 var x_axis = d3.axisBottom().scale(xScale);
-	 	 var y_axis = d3.axisLeft().scale(yScale);
-	 	 
-	 	svg_bar_c.append("g")
-	     .attr('id', 'x_axis')
-	     .attr("transform", "translate("+0+","+(chart_height + v_padding)+")")
-	     .call(x_axis);
-	 	//x-axis label
-	 	svg_bar_c.append('text')
-	     .attr('x', chart_width / 2 + h_padding/2)
-	     .attr('y', (chart_height+ 2*v_padding-10))
-	     .attr('text-anchor', 'middle')
-	     .text('Number Of Users')	
-	     
-	 	svg_bar_c.append("g")
-	 	  .attr('id', 'y_axis')
-	     .attr("transform", "translate("+ h_padding+","+ v_padding+")" )
-	     .call(y_axis);
-	 	
-		 svg_bar_c.append('text')
-	 	    .attr('id', 'title')
-	 	    .attr('x', chart_width / 2 )
-	 	    .attr('y', v_padding-28)
-	 	    .attr('text-anchor', 'middle')
-	 	    .attr("font-size", 25)
-	 	    .text('Top 5 most rated games for year '+chart_year + ' with rating '+ chart_rating);
+		 if ( typeof top_5!="undefined" && top_5.length !=0){
+			 
+			 
+			//Create SVG element for bar chart   
+		 	 var svg_bar_c = d3.select("body")                
+		 	             .append("svg")
+		 	             .attr('id',"barchart")
+		 	             .attr("width", svg_width)                
+		 	             .attr("height", svg_height);  
+			
+			 console.log(top_5);
+			 x_upper_limit = top_5[0].users_rated;
+			 //console.log(x_upper_limit);
+			 
+			 var number_of_bars = top_5.length;
+			 y_upper_limit = (bar_height+bar_padding)*number_of_bars;
+			 xScale = d3.scaleLinear().domain([0, x_upper_limit]).range([0, chart_width-20]);
+	         yScale = d3.scaleLinear().domain([0, top_5.length]).range([y_upper_limit,0]);
+	         
+	         
+	         //tick_values = top_5.map(function(x){ return x.name.substring(0,10);})
+	         //console.log(tick_values);
+	         var start_of_y_axis= v_padding+chart_height-y_upper_limit;
+	         // create axis
+	     	 var x_axis = d3.axisBottom().scale(xScale);
+	     	 var y_axis = d3.axisLeft().scale(yScale);
+	      
+		   // create axis
+		 	 x_axis = d3.axisBottom().scale(xScale);//.innerTickSize(-chart_height).outerTickSize(0).tickPadding(10);
+		 	 var y_axis = d3.axisLeft().scale(yScale).tickSize(0).tickValues([]);
+		 	 
+		 	svg_bar_c.append("g")
+		     .attr('id', 'x_axis')
+		     .attr("transform", "translate("+h_padding+","+(chart_height + v_padding)+")")
+		     .call(x_axis);
+		 	//x-axis label
+		 	svg_bar_c.append('text')
+		     .attr('x', chart_width / 2 + h_padding/2)
+		     .attr('y', (chart_height+ 2*v_padding-10))
+		     .attr('text-anchor', 'middle')
+		     .text('Number Of Users')	
+		     
+		 	svg_bar_c.append("g")
+		 	  .attr('id', 'y_axis')
+		     .attr("transform", "translate("+ h_padding+","+ (v_padding+chart_height-y_upper_limit)+")" )
+		     .call(y_axis);
+		 	
+		 	svg_bar_c.append("text")
+		     .attr('id', 'y_axis_label')
+		     .attr("transform", "rotate(-90)")
+		     .attr("y", h_padding-120)
+		     .attr("x",0 - start_of_y_axis-y_upper_limit/2)
+		     .attr("dy", "1em")
+		     .style("text-anchor", "middle")
+		     .text("Games");      
+		 	 
 		 
-			 var bars = svg_bar_c.selectAll(".bar")
-		     .data(top_5)
-		     .enter()
-		     .append("g")
-		
-		 //append rects
-		    bars.append("rect")
-		     .attr("class", "bar")
-		     .attr("y", function (d,i) {
-		         return (i*25+10);
-		     })
-		     .attr("height",25)
-		     .attr("x", 0)
-		     .attr("width", function (d) {
-		         return d.users_rated;
-		     })
-		 
-	 });
+			 svg_bar_c.append('text')
+		 	    .attr('id', 'title')
+		 	    .attr('x', chart_width / 2 +h_padding )
+		 	    .attr('y', v_padding-28)
+		 	    .attr('text-anchor', 'middle')
+		 	    .attr("font-size", 25)
+		 	    .text('Top 5 most rated games for year '+chart_year + ' with rating '+ chart_rating);
+			 
+			 svg_bar_c.append("g")
+		  		.attr("transform","translate("+h_padding+"," + (chart_height+50) + ")")
+		  		.style("stroke-dasharray",("3,3"))
+		  		.call(make_x_gridlines(xScale)
+		            .tickSize(-(chart_height-20))
+		            .tickFormat("")
+		         )
+			 
+				 var bars = svg_bar_c.selectAll(".bar")
+			     .data(top_5)
+			     .enter()
+			     .append("g")
+			
+			    //append rects
+			    bars.append("rect")
+			     .attr("class", "bar")
+			     .attr("y", function (d,i) {
+			         return ((i*(bar_height+bar_padding))+start_of_y_axis);})
+			     .attr("height",25)
+			     .attr("x", h_padding)
+			     .attr("width", function(d){return xScale( d.users_rated) ;});
+			     
+				 bars.append("text")
+		            .attr("class", "label")
+		            //y position of the label is halfway down the bar
+		            .attr("y", function (d,i) {
+				         return ((i*(bar_height+bar_padding))+start_of_y_axis+bar_height/2);})
+				    .attr("x", h_padding-85)  
+				    .text(function (d) {
+		                return d.name.substring(0,10);
+		            });
+		 }//end if top_5 != null
+	 }); //end then
 	 
 	
+}//end handle mouse over
+
+function handleMouseOut(d,i){
+	
+	d3.select(event.currentTarget).attr('r',5);
+	d3.select("#barchart").remove();
 }
 	  
 </script>
