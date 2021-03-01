@@ -2,11 +2,29 @@
 <meta charset="utf-8">
 <head>
 	<!-- add title -->
-	
+	<script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+    <script type="text/javascript" src="../lib/d3-dsv.min.js"></script>
+    <script type="module" src="../lib/d3-legend.min.js"></script>
+    
     <!-- import required libraries here -->
 	
 	<style>
 		/* define CSS rules here */
+		.continent {
+		    fill: "red";
+		    stroke: #e0cabc;
+		    stroke-width: 0.5;
+		}
+		
+		.circles {
+		    fill: #3c373d;
+		}
+		
+		.labels {
+		    font-family: sans-serif;
+		    font-size: 11px;
+		    fill: #3c373d;
+		}
 	
 	</style>
 </head>
@@ -14,9 +32,10 @@
 
 <body>
     <!-- Add heading for the visualization -->
-	
+	<h1>Average Rating of Board Games Across the World</h1>
 	<!-- Create dropdown element here. Options should be added after reading in game file, they should not be created here.-->
-	
+	<strong style="margin-left: 2em;">Select Board Game: </strong> <select id="game_name"></select>
+	<br><br>
 	<!-- append visualization svg to this div-->
     <div id="choropleth"></div>
 
@@ -24,22 +43,34 @@
 	
 		// enter code to define margin and dimensions for svg
 		
+	    var w = 1100;
+	    var h = 500;
+   	
 		// enter code to create svg
+		/* var svg = d3.select("div#choropleth").append("svg")
+		                                      .attr("preserveAspectRatio", "xMinYMin meet")
+				                              .attr("viewBox", "0 0 " + w + " " + h).style("background","#c9e8fd")
+				                              .attr("id", "map");*/
 		
 		// enter code to create color scale
-		
+		var countryColor = d3.scaleQuantize()
+			                 .range( ['#fed98e','#fe9929','#d95f0e','#993404']);//'#fee5d9','#fcae91','#fb6a4a','#cb181d']);
 		// enter code to define tooltip
         
 		// enter code to define projection and path required for Choropleth
+		var projection = d3.geoMercator().translate([w/2.5, h/2.5]).scale(120).center([15,30]);
+		//var path = d3.geoPath().projection(projection);
 
 		// define any other global variables 
-
-        Promise.all([
+		var worldmap = d3.json("world_countries.json");
+		var ratings = d3.csv("ratings-by-country.csv");
+        Promise.all([worldmap,ratings
             // enter code to read files
 			
         ]).then(
             // enter code to call ready() with required arguments
-			
+             
+			resolve=>{ready("error",resolve[0], resolve[1] )}
         );
 		
 		// this function should be called once the data from files have been read
@@ -48,19 +79,76 @@
 		
         function ready(error, world, gameData) {
             // enter code to extract all unique games from gameData
-
+            //console.log(world);
+            let options = [...new Set(gameData.map(d => d.Game))]; //map = d3.map(gameData.Game)
+            //console.log(options);
             // enter code to append the game options to the dropdown
-			
+			d3.select("#game_name").selectAll('option')
+		    .data(options)
+		    .enter()
+		      .append('option')
+		      .text(d => d)
+		      .attr('value', d => d);
             // event listener for the dropdown. Update choropleth and legend when selection changes. Call createMapAndLegend() with required arguments.
-			
+			document.getElementById("game_name").onchange = function(){createMapAndLegend(world, gameData, game_name.options[game_name.selectedIndex].value)}
             // create Choropleth with default option. Call createMapAndLegend() with required arguments. 
+			createMapAndLegend(world, gameData, game_name.options[game_name.selectedIndex].value)
+            
         }
 
 		// this function should create a Choropleth and legend using the world and gameData arguments for a selectedGame
 		// also use this function to update Choropleth and legend when a different game is selected from the dropdown
         function createMapAndLegend(world, gameData, selectedGame){ 
-		
+        	
+        	
+        	
+			console.log("New game");
+			console.log(world.features);
+			selectedGameData  = gameData.filter(function(d){ return d.Game == selectedGame ;})
+			//console.log( "number of countries"+ selectedGameData.length);
+			var geoPath = d3.geoPath().projection(projection);
+			//get average rates for the selected game
+			gameRatings = selectedGameData.map(function(d){return parseFloat(d['Average Rating']);})
+			var featureSize = d3.extent(gameRatings);//, d=>geoPath.area(d));
+			console.log("fs"+featureSize[0]+" ", featureSize[1]);
+			countryColor.domain([featureSize[0], featureSize[1]]);
 			
+			
+			//remove the old svg and re-append
+			d3.select("div#choropleth").select("#map").remove();
+        	var svg = d3.select("div#choropleth").append("svg")
+		                                      .attr("preserveAspectRatio", "xMinYMin meet")
+				                              .attr("viewBox", "0 0 " + w + " " + h).style("background","#c9e8fd")
+				                              .attr("id", "map");
+			svg.selectAll("path")
+            .data(world.features)
+            .enter()
+            .append("path")
+            .attr("d", geoPath)
+            .attr("class","continent")
+            .style("fill", function(d){  
+                                          for(var i=0; i<= selectedGameData.length;i++){
+            								 
+            	                             if(typeof selectedGameData[i]!="undefined" && d.properties.name == selectedGameData[i]['Country'] ){
+            	                            	 console.log(d.properties.name+"  "+selectedGameData[i]['Average Rating']);
+            	                            	 return countryColor(Math.floor(selectedGameData[i]['Average Rating']));
+            	                            	 
+            	                             }
+                                          }
+                                          return "gray";
+            	                       });
+            
+        	var legend = d3.legendColor()
+						  .labelFormat(d3.format(".2f"))
+						  //.useClass(true)
+						  .titleWidth(60)
+						  .scale(countryColor)
+						  //.attr('transform',"translate("+w-100+","+h-100+")");
+						svg.append("g")
+					    .attr("transform", "translate(900,20)") //set the position of the legend on the svg
+					    .call(legend);
+        	
+        	
         }
     </script>
 
