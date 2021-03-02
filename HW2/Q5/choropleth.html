@@ -4,9 +4,10 @@
 	<!-- add title -->
 	<script type="text/javascript" src="../lib/d3.v5.min.js"></script>
     <script type="text/javascript" src="../lib/d3-dsv.min.js"></script>
-    <script type="module" src="../lib/d3-legend.min.js"></script>
-    
     <!-- import required libraries here -->
+    <script type="module" src="../lib/d3-legend.min.js"></script>
+    <script type="text/javascript" src="../lib/d3-tip.min.js"></script>
+    
 	
 	<style>
 		/* define CSS rules here */
@@ -25,6 +26,9 @@
 		    font-size: 11px;
 		    fill: #3c373d;
 		}
+		.tooltip.vis{
+		
+		}
 	
 	</style>
 </head>
@@ -38,7 +42,7 @@
 	<br><br>
 	<!-- append visualization svg to this div-->
     <div id="choropleth"></div>
-
+    <div id="my_dataviz"></div>
     <script>
 	
 		// enter code to define margin and dimensions for svg
@@ -47,7 +51,7 @@
 	    var h = 500;
    	
 		// enter code to create svg
-		/* var svg = d3.select("div#choropleth").append("svg")
+		 var svg; /*= d3.select("div#choropleth").append("svg")
 		                                      .attr("preserveAspectRatio", "xMinYMin meet")
 				                              .attr("viewBox", "0 0 " + w + " " + h).style("background","#c9e8fd")
 				                              .attr("id", "map");*/
@@ -56,9 +60,10 @@
 		var countryColor = d3.scaleQuantize()
 			                 .range( ['#fed98e','#fe9929','#d95f0e','#993404']);//'#fee5d9','#fcae91','#fb6a4a','#cb181d']);
 		// enter code to define tooltip
-        
+        var tooltip;
+		
 		// enter code to define projection and path required for Choropleth
-		var projection = d3.geoMercator().translate([w/2.5, h/2.5]).scale(120).center([15,30]);
+		var projection = d3.geoMercator().translate([w/2.5, h/2.5]).scale(110).center([15,30]);
 		//var path = d3.geoPath().projection(projection);
 
 		// define any other global variables 
@@ -100,7 +105,26 @@
 		// also use this function to update Choropleth and legend when a different game is selected from the dropdown
         function createMapAndLegend(world, gameData, selectedGame){ 
         	
+        	//remove the old svg and re-append
+			d3.select("div#choropleth").select("#map").remove();
+        	var svg = d3.select("div#choropleth").append("svg")
+		                                      .attr("preserveAspectRatio", "xMinYMin meet")
+				                              .attr("viewBox", "0 0 " + w + " " + h).style("background","#c9e8fd")
+				                              .attr("id", "map");
+			
+        	 tooltip = d3.select("#my_dataviz")
+        	    .append("div")
+			    .style("position", "absolute")
+			    .style("opacity", 0)
+			    .style("background-color", "white")
+			    .style("border", "solid")
+			    .style("border-width", "1px")
+			    .style("border-radius", "5px")
+			    .style("padding", "10px")
+			    .style("width", "200px")
+			    .style("height", "80px");
         	
+        	//svg.append(tooltip);
         	
 			console.log("New game");
 			console.log(world.features);
@@ -114,12 +138,7 @@
 			countryColor.domain([featureSize[0], featureSize[1]]);
 			
 			
-			//remove the old svg and re-append
-			d3.select("div#choropleth").select("#map").remove();
-        	var svg = d3.select("div#choropleth").append("svg")
-		                                      .attr("preserveAspectRatio", "xMinYMin meet")
-				                              .attr("viewBox", "0 0 " + w + " " + h).style("background","#c9e8fd")
-				                              .attr("id", "map");
+			
 			svg.selectAll("path")
             .data(world.features)
             .enter()
@@ -127,29 +146,56 @@
             .attr("d", geoPath)
             .attr("class","continent")
             .style("fill", function(d){  
-                                          for(var i=0; i<= selectedGameData.length;i++){
+                                          for(var i=0; i< selectedGameData.length;i++){
             								 
             	                             if(typeof selectedGameData[i]!="undefined" && d.properties.name == selectedGameData[i]['Country'] ){
-            	                            	 console.log(d.properties.name+"  "+selectedGameData[i]['Average Rating']);
             	                            	 return countryColor(Math.floor(selectedGameData[i]['Average Rating']));
             	                            	 
             	                             }
                                           }
                                           return "gray";
-            	                       });
+            	                       })
+            .on("mouseover", function(d){showToolTip(d,selectedGame);})//function(){return  tooltip.style("opacity", "1");})
+            .on("mousemove", function(){return tooltip.style("top", (event.pageY)+"px").style("left",(event.pageX)+"px");})
+            .on("mouseout", function(){return tooltip.style("opacity", 0);});
             
         	var legend = d3.legendColor()
 						  .labelFormat(d3.format(".2f"))
 						  //.useClass(true)
 						  .titleWidth(60)
 						  .scale(countryColor)
-						  //.attr('transform',"translate("+w-100+","+h-100+")");
+						 
 						svg.append("g")
 					    .attr("transform", "translate(900,20)") //set the position of the legend on the svg
 					    .call(legend);
         	
         	
         }
+		
+		
+	function showToolTip(country, selectedGame){
+		
+		
+		var countryInfo = null;
+		var tooltipText = ""
+		for(var i=0; i< selectedGameData.length;i++){
+			 
+            if(typeof selectedGameData[i]!="undefined" && country.properties.name == selectedGameData[i]['Country'] ){
+           	 countryInfo =  [selectedGameData[i]['Number of Users'], Math.floor(selectedGameData[i]['Average Rating'])]; 
+           	 
+            }
+         }
+		tooltipText = "<strong>Country: </strong>"+country.properties.name+"<br><strong>Game: </strong>"+selectedGame+"<br><strong>Avg Rating: </strong>";
+		if (countryInfo != null){
+			tooltipText = tooltipText + countryInfo[1]+ "<br><strong>Number of Users: </strong>"+ countryInfo[0];
+		} else{
+			tooltipText = tooltipText + "N/A" + "<br><strong>Number of Users: </strong>"+ "N/A";
+		}
+		
+		tooltip.style("opacity", "1");
+		tooltip.html(tooltipText);
+		
+	}	
     </script>
 
 </body>
