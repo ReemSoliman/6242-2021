@@ -2,12 +2,13 @@
 <meta charset="utf-8">
 <head>
 	<!-- add title -->
-	<script type="text/javascript" src="../lib/d3.v5.min.js"></script>
-    <script type="text/javascript" src="../lib/d3-dsv.min.js"></script>
+	<title>Choropleth of Board Games</title>
     <!-- import required libraries here -->
+    <script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+    <script type="text/javascript" src="../lib/d3-dsv.min.js"></script>
     <script type="module" src="../lib/d3-legend.min.js"></script>
-    <script type="text/javascript" src="../lib/d3-tip.min.js"></script>
-    
+    <script  src="../lib/d3-tip.min.js"></script>
+ </head>
 	
 	<style>
 		/* define CSS rules here */
@@ -17,21 +18,20 @@
 		    stroke-width: 0.5;
 		}
 		
-		.circles {
-		    fill: #3c373d;
-		}
 		
-		.labels {
-		    font-family: sans-serif;
-		    font-size: 11px;
-		    fill: #3c373d;
-		}
-		.tooltip.vis{
-		
-		}
+		.d3-tip {
+	      line-height:1;
+	      padding: 6px;
+	      background: rgba(0, 0, 0, 0.8);
+	      color: #fff;
+	      border-radius: 4px;
+	      font-size: 15px;
+    }
+    
+   
 	
 	</style>
-</head>
+
 
 
 <body>
@@ -51,21 +51,16 @@
 	    var h = 500;
    	
 		// enter code to create svg
-		 var svg; /*= d3.select("div#choropleth").append("svg")
-		                                      .attr("preserveAspectRatio", "xMinYMin meet")
-				                              .attr("viewBox", "0 0 " + w + " " + h).style("background","#c9e8fd")
-				                              .attr("id", "map");*/
-		
+		 var svg; 
 		// enter code to create color scale
 		var countryColor = d3.scaleQuantize()
-			                 .range( ['#fed98e','#fe9929','#d95f0e','#993404']);//'#fee5d9','#fcae91','#fb6a4a','#cb181d']);
+			                 .range( ['#fed98e','#fe9929','#d95f0e','#993404']);
 		// enter code to define tooltip
-        var tooltip;
+        var tooltip ;
 		
 		// enter code to define projection and path required for Choropleth
 		var projection = d3.geoMercator().translate([w/2.5, h/2.5]).scale(110).center([15,30]);
-		//var path = d3.geoPath().projection(projection);
-
+		
 		// define any other global variables 
 		var worldmap = d3.json("world_countries.json");
 		var ratings = d3.csv("ratings-by-country.csv");
@@ -84,9 +79,8 @@
 		
         function ready(error, world, gameData) {
             // enter code to extract all unique games from gameData
-            //console.log(world);
-            let options = [...new Set(gameData.map(d => d.Game))]; //map = d3.map(gameData.Game)
-            //console.log(options);
+            let options = [...new Set(gameData.map(d => d.Game))]; 
+            
             // enter code to append the game options to the dropdown
 			d3.select("#game_name").selectAll('option')
 		    .data(options)
@@ -112,29 +106,20 @@
 				                              .attr("viewBox", "0 0 " + w + " " + h).style("background","#c9e8fd")
 				                              .attr("id", "map");
 			
-        	 tooltip = d3.select("#my_dataviz")
-        	    .append("div")
-			    .style("position", "absolute")
-			    .style("opacity", 0)
-			    .style("background-color", "white")
-			    .style("border", "solid")
-			    .style("border-width", "1px")
-			    .style("border-radius", "5px")
-			    .style("padding", "10px")
-			    .style("width", "200px")
-			    .style("height", "80px");
+		    tooltip = d3.tip()
+		      .attr("class", "d3-tip")
+		      .direction('e')
+		      .offset([-5, 0])
+		      .style('z-index', '99999999999')
+		     .html("please show up");    
+			svg.call(tooltip);    
         	
-        	//svg.append(tooltip);
-        	
-			console.log("New game");
-			console.log(world.features);
 			selectedGameData  = gameData.filter(function(d){ return d.Game == selectedGame ;})
-			//console.log( "number of countries"+ selectedGameData.length);
 			var geoPath = d3.geoPath().projection(projection);
 			//get average rates for the selected game
 			gameRatings = selectedGameData.map(function(d){return parseFloat(d['Average Rating']);})
 			var featureSize = d3.extent(gameRatings);//, d=>geoPath.area(d));
-			console.log("fs"+featureSize[0]+" ", featureSize[1]);
+			
 			countryColor.domain([featureSize[0], featureSize[1]]);
 			
 			
@@ -155,9 +140,9 @@
                                           }
                                           return "gray";
             	                       })
-            .on("mouseover", function(d){showToolTip(d,selectedGame);})//function(){return  tooltip.style("opacity", "1");})
-            .on("mousemove", function(){return tooltip.style("top", (event.pageY)+"px").style("left",(event.pageX)+"px");})
-            .on("mouseout", function(){return tooltip.style("opacity", 0);});
+            .on("mouseover",  function(d){ showToolTip(d,selectedGame,this);})//function(d){ showToolTip(d,selectedGame);}
+            //.on("mousemove", function(){return tooltip.offset([d3.event.pageX,d3.event.pageY]);})
+            .on("mouseout", tooltip.hide);
             
         	var legend = d3.legendColor()
 						  .labelFormat(d3.format(".2f"))
@@ -170,14 +155,21 @@
 					    .call(legend);
         	
         	
+         d3.select("div#choropleth").append('text')
+      	  .attr('id', 'myname')
+      	  .attr('x', w -30 )
+      	  //.attr('y', h-20)
+      	  .attr('text-anchor', 'middle')
+      	  .attr("font-size", 25)
+      	  .text('    rsoliman3');	
         }
 		
 		
-	function showToolTip(country, selectedGame){
+	function showToolTip(country, selectedGame,t){
 		
 		
 		var countryInfo = null;
-		var tooltipText = ""
+		var tooltipText = "Hi";
 		for(var i=0; i< selectedGameData.length;i++){
 			 
             if(typeof selectedGameData[i]!="undefined" && country.properties.name == selectedGameData[i]['Country'] ){
@@ -192,8 +184,9 @@
 			tooltipText = tooltipText + "N/A" + "<br><strong>Number of Users: </strong>"+ "N/A";
 		}
 		
-		tooltip.style("opacity", "1");
-		tooltip.html(tooltipText);
+		tooltip.html( tooltipText);
+		 tooltip.show(country,t);
+		
 		
 	}	
     </script>
